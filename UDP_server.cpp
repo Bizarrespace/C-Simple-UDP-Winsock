@@ -1,9 +1,8 @@
 #include <iostream>
 #include <WS2tcpip.h>
-
 #pragma comment (lib, "ws2_32.lib")
 
-void main()
+int main()
 {
 	// Start Winsock
 	WSADATA data;
@@ -11,12 +10,11 @@ void main()
 	int wsStarted = WSAStartup(version, &data);
 	if (wsStarted != 0) {
 		std::cout << "Can't start windsock" << wsStarted; 
-		return;
+		return 1;
 	}
 
 	// Bind socket to IP address and port
 	SOCKET in = socket(AF_INET, SOCK_DGRAM, 0);
-
 	sockaddr_in serverHint;
 	serverHint.sin_addr.S_un.S_addr = ADDR_ANY; // Just get any address from network card
 	serverHint.sin_family = AF_INET;
@@ -26,18 +24,17 @@ void main()
 		std::cout << "Can't bind to socket! " << WSAGetLastError() << std::endl;
 	}
 
-	// Client data??
+	// Client data
 	sockaddr_in client;
 	int clientLength = sizeof(client);
-	ZeroMemory(&client, clientLength);
-
-	// Message buffer??
 	char buf[1024];
 	
 
 	// Enter loop
 	while (true) {
+		
 		ZeroMemory(buf, 1024);
+		ZeroMemory(&client, clientLength);
 		
 		// Wait for message
 		int bytesIn = recvfrom(in, buf, 1024, 0, (sockaddr*)&client, &clientLength);
@@ -48,10 +45,11 @@ void main()
 		// Display message and client client info
 		char clientIp[256];
 		ZeroMemory(clientIp, 256);
-
 		inet_ntop(AF_INET, &client.sin_addr, clientIp, 256);
+		unsigned short clientPort = ntohs(client.sin_port);
 
-		std::cout << "message recv from " << clientIp << " : " << buf << std::endl;
+		std::cout << "Client " << clientIp << " : " << clientPort << std::endl;
+		std::cout << "message: " << buf << std::endl;
 	}
 		
 		
@@ -60,4 +58,6 @@ void main()
 	closesocket(in);
 	// shutdown winsock
 	WSACleanup();
+
+	return 0;
 }
