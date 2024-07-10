@@ -1,10 +1,8 @@
 #include <iostream>
 #include <WS2tcpip.h>
 #include <string>
-
 #pragma comment (lib, "ws2_32.lib")
-
-void main(int argc, char* argv[]) //we can pass in data using command line
+int main()
 {
 	// Start Winsock
 	WSADATA data;
@@ -12,7 +10,7 @@ void main(int argc, char* argv[]) //we can pass in data using command line
 	int wsStarted = WSAStartup(version, &data);
 	if (wsStarted != 0) {
 		std::cout << "Can't start windsock" << wsStarted;
-		return;
+		return 1;
 	}
 
 	// Create a hint structure for the server
@@ -26,14 +24,24 @@ void main(int argc, char* argv[]) //we can pass in data using command line
 	SOCKET out = socket(AF_INET, SOCK_DGRAM, 0);
 
 	// WRite out to that socket
-	std::string s(argv[1]);
-	int sendOk = sendto(out, s.c_str(), s.size() + 1, 0, (sockaddr*)&server, sizeof(server));
+	std::string userInput;
+	do {
+		std::cout << "Enter a message (or 'quit' to exit): ";
+		std::getline(std::cin, userInput);
 
-	if (sendOk == SOCKET_ERROR) {
-		std::cout << "That didn't work! " << WSAGetLastError() << std::endl;
-	}
+		if (userInput != "quit") {
+			// Send the message that the user typed
+			int sendOk = sendto(out, userInput.c_str(), userInput.size() + 1, 0, (sockaddr*)&server, sizeof(server));
+			if (sendOk == SOCKET_ERROR) {
+				std::cout << "Error sending message" << WSAGetLastError() << std::endl;
+			}
+		}
+	} while (userInput != "quit");
+
 	// Close the socket
 	closesocket(out);
 	// Close down winsock
 	WSACleanup();
+
+	return 0;
 }
